@@ -44,8 +44,6 @@ func main() {
 	cfg.wg.Wait()
 
 	// printing report
-	for k := range cfg.pages {
-		fmt.Printf("Page: %s, visited: %d\n", k, cfg.pages[k])
-	}
+	printReport(cfg.pages, cfg.baseURL.String())
 
 }
