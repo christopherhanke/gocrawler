@@ -6,21 +6,23 @@ import (
 	"net/url"
 )
 
-func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
+func (cfg *config) crawlPage(rawCurrentURL string) {
+	// setup concurrent crawling
+	cfg.concurrencyControl <- struct{}{}
+	defer func() {
+		<-cfg.concurrencyControl
+		cfg.wg.Done()
+	}()
+
 	// parse rawURL to URL
-	baseURL, err := url.Parse(rawBaseURL)
-	if err != nil {
-		log.Printf("error parsing base url. state: %s, %s, %v", rawBaseURL, rawCurrentURL, len(pages))
-		return
-	}
 	currURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
-		log.Printf("error parsing current url. state: %s, %s, %v", rawBaseURL, rawCurrentURL, len(pages))
+		log.Printf("error parsing current url. state: %s, %v", rawCurrentURL, len(cfg.pages))
 		return
 	}
 
 	// chekc if currentURL is on baseURL host
-	if baseURL.Hostname() != currURL.Hostname() {
+	if cfg.baseURL.Hostname() != currURL.Hostname() {
 		return
 	}
 
@@ -32,13 +34,10 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 	}
 
 	// increment if visited
-	if _, ok := pages[normalCurr]; ok {
-		pages[normalCurr]++
+	firstTime := cfg.addPageVisit(normalCurr)
+	if !firstTime {
 		return
 	}
-
-	// mark as visited
-	pages[normalCurr] = 1
 
 	fmt.Printf("crawling %s\n", rawCurrentURL)
 
@@ -48,7 +47,7 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 		log.Printf("error getting HTML from %s: %v", rawCurrentURL, err)
 		return
 	}
-	links, err := getURLsFromHTML(htmlBody, rawBaseURL)
+	links, err := getURLsFromHTML(htmlBody, cfg.baseURL)
 	if err != nil {
 		log.Printf("error getting URLs from HTML, current: %s error: %v", rawCurrentURL, err)
 		return
@@ -56,7 +55,8 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 
 	// recursively call crawlPage with new links
 	for _, link := range links {
-		crawlPage(rawBaseURL, link, pages)
+		cfg.wg.Add(1)
+		go cfg.crawlPage(link)
 	}
 
 }

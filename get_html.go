@@ -12,6 +12,8 @@ func getHTML(rawURL string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode < 500 && resp.StatusCode >= http.StatusBadRequest {
 		return "", fmt.Errorf("response error: %v", resp.StatusCode)
 	}

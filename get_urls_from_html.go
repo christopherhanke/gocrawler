@@ -7,13 +7,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
-	// parse baseURL to handle only host
-	baseURL, err := url.Parse(rawBaseURL)
-	if err != nil {
-		return nil, err
-	}
-
+func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	// read the HTML body and parse it to html nodes
 	doc, err := html.Parse(strings.NewReader(htmlBody))
 	if err != nil {
