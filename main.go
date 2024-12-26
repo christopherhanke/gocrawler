@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -16,5 +17,11 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("starting crawl of: %s\n", args[0])
+	fetched, err := getHTML(args[0])
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		fmt.Print(fetched)
+	}
 
 }
