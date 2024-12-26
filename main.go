@@ -3,21 +3,36 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func main() {
 	args := os.Args[1:]
-	if len(args) < 1 {
-		fmt.Println("no website provided")
+	if len(args) < 3 {
+		fmt.Println("not enough arguments")
+		fmt.Println("usage: go run . 'urlWebsite' 'maxConcurrency' 'maxPages'")
 		return
 	}
-	if len(args) > 1 {
+	if len(args) > 3 {
 		fmt.Println("too many arguments provided")
+		fmt.Println("usage: go run . 'urlWebsite' 'maxConcurrency' 'maxPages'")
+		return
+	}
+
+	rawBaseURL := args[0]
+	maxConcurrency, err := strconv.Atoi(args[1])
+	if err != nil {
+		fmt.Printf("maxConcurrency not valid: %v\n", err)
+		return
+	}
+	maxPages, err := strconv.Atoi(args[2])
+	if err != nil {
+		fmt.Printf("maxPages not valid: %v\n", err)
 		return
 	}
 
 	// setup configure
-	cfg, err := configure(args[0], 3)
+	cfg, err := configure(rawBaseURL, maxConcurrency, maxPages)
 	if err != nil {
 		fmt.Printf("error creating configure: %v", err)
 		return
